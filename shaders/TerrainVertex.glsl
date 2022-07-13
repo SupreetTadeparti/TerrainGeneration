@@ -4,12 +4,18 @@ layout (location = 0) in vec2 position;
 
 out vec4 vary_Color;
 out vec4 vary_WorldPos;
+out vec4 vary_LightFragPos;
 out float vary_Visibility;
 
 uniform float u_Noise;
+uniform float u_OffsetX;
+uniform float u_OffsetZ;
 uniform mat4 u_Model;
-uniform mat4 u_View;
+uniform mat4 u_ViewTranslation;
+uniform mat4 u_ViewRotation;
 uniform mat4 u_Projection;
+uniform mat4 u_LightProjection;
+uniform mat4 u_LightView;
 
 const float density = 0.0015;
 const float gradient = 5.0;
@@ -61,11 +67,16 @@ void main()
 {
     vec4 modelPosition = vec4(position.x, 0, position.y, 1.0);
     vec4 worldPosition = u_Model * modelPosition;
-    worldPosition.y = snoise(vec2(worldPosition.x / 200, worldPosition.z / 200)) * u_Noise + 25;
-    vec4 viewWorldPosition = u_View * worldPosition;
+    float yPos = snoise(vec2(worldPosition.x / 200 + u_OffsetX, worldPosition.z / 200 + u_OffsetZ)) * u_Noise + 25;
+    worldPosition.y = yPos;
+    mat4 translation = u_ViewTranslation;
+    float cameraYPos = snoise(vec2(-translation[3][0] / 200 + u_OffsetX, -translation[3][2] / 200 + u_OffsetZ)) * u_Noise + 30;
+    translation[3][1] = min(translation[3][1], -cameraYPos);
+    vec4 viewWorldPosition = u_ViewRotation * translation * worldPosition;
     gl_Position = u_Projection * viewWorldPosition;
     vec4 color = (worldPosition.y < 5) ? vec4(0.5, 0.3, 0.2, 1.0) : vec4(0.4, 0.8, 0.3, 1.0);
     vary_Color = color;
     vary_WorldPos = worldPosition;
+    vary_LightFragPos = u_LightProjection * u_LightView * worldPosition;
     vary_Visibility = clamp(exp(-pow((length(viewWorldPosition.xyz) * density), gradient)), 0.0, 1.0);
 }

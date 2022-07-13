@@ -1,12 +1,12 @@
 import ctypes
 from pyglet.gl import *
-import pyrr
 from water import Water
+import glm
 
 
 class Terrain:
-    SIZE = 600
-    VERTEX_COUNT = SIZE // 10
+    SIZE = 800
+    VERTEX_COUNT = SIZE // 8
     QUAD_SIZE = SIZE // VERTEX_COUNT
 
     @classmethod
@@ -47,8 +47,10 @@ class Terrain:
     def __init__(self, worldX, worldZ):
         self.worldX = worldX
         self.worldZ = worldZ
-        self.matrix = pyrr.matrix44.create_from_translation(
-            (self.worldX * (Terrain.SIZE - Terrain.QUAD_SIZE), 0, -self.worldZ * (Terrain.SIZE - Terrain.QUAD_SIZE)))
+        self.matrix = glm.translate(glm.identity(glm.mat4), glm.vec3(
+            self.worldX * (Terrain.SIZE - Terrain.QUAD_SIZE), 0,
+            -self.worldZ * (Terrain.SIZE - Terrain.QUAD_SIZE)
+        ))
 
     def render(self, shader):
         shader.set_uniform_mat4("u_Model", self.matrix)

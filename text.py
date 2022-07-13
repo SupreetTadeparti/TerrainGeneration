@@ -2,7 +2,6 @@ import matplotlib
 from PIL import Image, ImageDraw, ImageFont
 from texture import Texture
 import ctypes
-import pyrr
 from pyglet.gl import *
 
 

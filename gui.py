@@ -1,5 +1,6 @@
 from text import Text
 from pyglet.gl import *
+import glm
 import ctypes
 
 
@@ -48,7 +49,7 @@ class GUI:
         self.buttons = []
 
     def add_button(self, button):
-        self.buttons.append(button)
+        self.buttons.insert(0, button)
 
     def click(self, x, y):
         for button in self.buttons:
@@ -71,12 +72,13 @@ class GUI:
 
 
 class Button:
-    def __init__(self, x, y, width, height, color, text, click_callback):
+    def __init__(self, x, y, width, height, color, text, click_callback, font_size=80, hover=True):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.click_callback = click_callback
+        self.hover = hover
 
         positions = [
             x, y, -0.1,
@@ -90,9 +92,9 @@ class Button:
             2, 3, 0
         ]
 
-        text_width = len(text) * 15
-        self.text = Text(text, x + (width - text_width) //
-                         2, y + (height - 30) // 2)
+        text_width = len(text) * 15 * font_size // 75
+        self.text = Text(text, x + (width - text_width) // 2,
+                         y + (height - font_size // 2 - 10) // 2, font_size)
 
         self.color = color
 

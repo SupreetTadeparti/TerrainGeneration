@@ -1,5 +1,6 @@
-import pyglet
 import window
+import pyglet
+pyglet.options['shadow_window'] = False
 
 
 class App:

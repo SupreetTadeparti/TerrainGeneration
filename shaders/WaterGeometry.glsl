@@ -8,8 +8,12 @@ out vec3 v_FragPos;
 out float v_Visibility;
 
 uniform float u_Height;
+uniform float u_OffsetX;
+uniform float u_OffsetZ;
+uniform float u_Noise;
 uniform mat4 u_Model;
-uniform mat4 u_View;
+uniform mat4 u_ViewTranslation;
+uniform mat4 u_ViewRotation;
 uniform mat4 u_Projection;
 
 const float density = 0.00125;
@@ -71,7 +75,10 @@ void main()
     for (int i = 0; i < 3; i++) {
         vec4 worldPosition = u_Model * gl_in[i].gl_Position;
         worldPosition.y += u_Height;
-        vec4 viewWorldPosition = u_View * worldPosition;
+        mat4 translation = u_ViewTranslation;
+        float cameraYPos = snoise(vec2(-translation[3][0] / 200 + u_OffsetX, -translation[3][2] / 200 + u_OffsetZ)) * u_Noise + 30;
+        translation[3][1] = min(translation[3][1], -cameraYPos);
+        vec4 viewWorldPosition = u_ViewRotation * translation * worldPosition;
         gl_Position = u_Projection * viewWorldPosition;
         v_FragPos = vec3(worldPosition);
         v_Normal = normal;

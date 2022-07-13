@@ -1,13 +1,13 @@
 import ctypes
 from pyglet.gl import *
-import pyrr
 from time import perf_counter
 from random import random
+import glm
 
 
 class Water:
-    SIZE = 600
-    VERTEX_COUNT = SIZE // 10
+    SIZE = 800
+    VERTEX_COUNT = SIZE // 8
     QUAD_SIZE = SIZE // VERTEX_COUNT
 
     @classmethod
@@ -61,14 +61,14 @@ class Water:
 
         cls.start = perf_counter()
 
-    def __init__(self, worldX, worldZ, camera):
+    def __init__(self, worldX, worldZ):
         self.worldX = worldX
         self.worldZ = worldZ
 
-        self.camera = camera
-
-        self.matrix = pyrr.matrix44.create_from_translation(
-            (self.worldX * (Water.SIZE - Water.QUAD_SIZE), 0, -self.worldZ * (Water.SIZE - Water.QUAD_SIZE)))
+        self.matrix = glm.translate(glm.mat4(1.0), glm.vec3(
+            self.worldX * (Water.SIZE - Water.QUAD_SIZE), 0, -
+            self.worldZ * (Water.SIZE - Water.QUAD_SIZE)
+        ))
 
     def render(self, shader):
         shader.set_uniform_1f("u_DeltaTime", perf_counter() - Water.start)
