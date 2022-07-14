@@ -403,9 +403,8 @@ class Window(pyglet.window.Window):
     def on_close(self):
         if not self.main_menu:
             self.world.clean_up()
-        self.tree_model.clean_up()
-        self.bush_model.clean_up()
-        self.rock_model.clean_up()
+        for model in self.models:
+            model.clean_up()
         self.terrain_shader.clean_up()
         self.water_shader.clean_up()
         self.model_shader.clean_up()
