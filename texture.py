@@ -7,8 +7,7 @@ from PIL import Image
 
 class Texture:
     def __init__(self, path, type="path"):
-        self.texture = path if type == "image" else Image.open(
-            path).transpose(Image.FLIP_TOP_BOTTOM)
+        self.texture = path if type == "image" else Image.open(path).transpose(Image.FLIP_TOP_BOTTOM)
         if self.texture.mode == "RGB":
             self.texture.putalpha(255)
         self.texture_id = ctypes.c_uint32()
@@ -21,3 +20,6 @@ class Texture:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, self.texture.width,
                      self.texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, self.texture.tobytes())
         glBindTexture(GL_TEXTURE_2D, 0)
+
+    def clean_up(self):
+        glDeleteTextures(1, self.texture_id)

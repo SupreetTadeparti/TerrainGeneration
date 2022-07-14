@@ -4,6 +4,10 @@ from time import perf_counter
 from random import random
 import glm
 
+# Every chunk in the water holds the same static model - a flat plane rectangle.
+
+# Each vertex gets pulled up and down through a sine wave based on time in the vertex shader to create a mini-wave effect.
+
 
 class Water:
     SIZE = 800
@@ -76,8 +80,7 @@ class Water:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Water.ibo)
         glEnableVertexAttribArray(0)
         glEnableVertexAttribArray(1)
-        glDrawElements(GL_TRIANGLES, len(
-            Water.indices), GL_UNSIGNED_INT, 0)
+        glDrawElements(GL_TRIANGLES, len(Water.indices), GL_UNSIGNED_INT, 0)
         glDisableVertexAttribArray(1)
         glDisableVertexAttribArray(0)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)

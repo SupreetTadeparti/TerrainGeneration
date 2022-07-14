@@ -3,6 +3,7 @@ from pyglet.gl import *
 from water import Water
 import glm
 
+# Every chunk in the terrain holds the same static model. The heights are modified in the vertex shader
 
 class Terrain:
     SIZE = 800

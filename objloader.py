@@ -3,7 +3,7 @@ from model import Model
 from pyglet.gl import *
 import pyglet
 
-
+# obj loader from scratch. wasn't fun.
 class OBJLoader:
     @classmethod
     def load_model(cls, file, shader):
@@ -21,10 +21,14 @@ class OBJLoader:
         vt = []
         f = []
         g = 0
+        # open model file
         with open("models/" + file + ".obj", "r") as reader:
+            # for each line
             while line := reader.readline():
+                # save material file name
                 if line.startswith("mtllib"):
                     mtl = line.split(" ")[1].replace("\n", "")
+                # read material file, and load color
                 elif line.startswith("usemtl"):
                     texture = line.split(" ")[1]
                     with open(f"models/{mtl}") as mtl_reader:
@@ -37,12 +41,16 @@ class OBJLoader:
                                     map(float, mtl_line.split(" ")[1:])) + [1.0]
                     for _ in range(len(v)):
                         colors += color
+                # positions
                 elif line.startswith("v "):
                     v.append(line)
+                # texture coordinates
                 elif line.startswith("vt "):
                     vt.append(line)
+                # normals
                 elif line.startswith("vn "):
                     vn.append(line)
+                # connection between the three above
                 elif line.startswith("f "):
                     split = line.split(" ")
                     if len(split) == 5:
@@ -54,6 +62,8 @@ class OBJLoader:
                         f.append(line)
                 elif line.startswith("g "):
                     g += 1
+
+        # reformatting data
 
         for position in v:
             positions.append(float(position.split(" ")[1]))
@@ -69,6 +79,7 @@ class OBJLoader:
         texture_coordinates = [0] * len(positions) * 2
         normals = [0] * len(positions) * 3
 
+        # indices and more reformatting
         for i in f:
             vertices = i.split(" ")[1:]
             for vertex in vertices:
@@ -85,6 +96,7 @@ class OBJLoader:
 
         colors *= g
 
+        # loading data (opengl)
         vao = ctypes.c_uint32()
         glGenVertexArrays(1, vao)
         glBindVertexArray(vao)
@@ -124,6 +136,7 @@ class OBJLoader:
 
         vbos = (position_vbo, normal_vbo, color_vbo, indices_vbo)
 
+        # creating model
         model = Model(vao, vbos, len(indices))
         model.set_shader(shader)
 

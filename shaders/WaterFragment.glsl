@@ -1,13 +1,9 @@
 #version 330 core
 
-in vec3 v_FragPos;
 in vec3 v_Normal;
 in float v_Visibility;
 
 out vec4 o_Color;
-
-const float shineDamper = 1.0;
-const float reflectivity = 2.0;
 
 void main()
 {

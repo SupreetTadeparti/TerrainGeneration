@@ -14,38 +14,57 @@ from camera import Camera
 from water import Water
 from terrain import Terrain
 from shader import Shader
-from shadow import Shadow
 from transformation import Transformation
 from pyglet.gl import *
 from pyglet.window import key
 import pyglet
 
 
+'''
+The Window Class is the Root of the Game!
+
+W - Forward
+A - Leftward
+S - Backward
+D - Rightward
+SPACE - Upward
+LSHIFT - Downward
+
+Press 'P' to toggle the wireframe
+
+Hotkey between 1, 2, and 3 to change the current model
+
+Click anywhere on the terrain or on models to place the current model there
+'''
+
+
 class Window(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fov = 70
+        self.set_icon(pyglet.resource.image("img/icon.png"))
+
+        self.fov = 75
         self.mouse_sensitivity = 0.0075
         self.frames = 0
         self.wireframe = False
 
-        self.text_shader = Shader("TextVertex.glsl", "TextFragment.glsl")
-        self.gui_shader = Shader("GUIVertex.glsl", "GUIFragment.glsl")
-        self.model_shader = Shader("ModelVertex.glsl",
-                                   "ModelGeometry.glsl",
-                                   "ModelFragment.glsl")
-        self.terrain_shader = Shader("TerrainVertex.glsl",
-                                     "TerrainGeometry.glsl",
-                                     "TerrainFragment.glsl")
-        self.water_shader = Shader("WaterVertex.glsl",
-                                   "WaterGeometry.glsl",
-                                   "WaterFragment.glsl")
+        self.text_shader = Shader("TextVertex", "TextFragment")
+        self.gui_shader = Shader("GUIVertex", "GUIFragment")
+        self.model_shader = Shader("ModelVertex",
+                                   "ModelGeometry",
+                                   "ModelFragment")
+        self.terrain_shader = Shader("TerrainVertex",
+                                     "TerrainGeometry",
+                                     "TerrainFragment")
+        self.water_shader = Shader("WaterVertex",
+                                   "WaterGeometry",
+                                   "WaterFragment")
 
         self.keys = defaultdict(lambda: False)
 
         self.projection_matrix = glm.perspective(
-            self.fov, self.width / self.height, 0.1, 750)
+            glm.radians(self.fov), self.width / self.height, 0.1, 750)
 
         self.ortho_projection_matrix = glm.ortho(0, self.width, self.height, 0)
 
@@ -71,11 +90,30 @@ class Window(pyglet.window.Window):
         self.water_shader.set_uniform_mat4(
             "u_Projection", self.projection_matrix)
 
-        self.camera = Camera(
-            self.model_shader, self.terrain_shader, self.water_shader)
+        self.camera = Camera()
+        self.camera.add_shader(self.terrain_shader)
+        self.camera.add_shader(self.water_shader)
+        self.camera.add_shader(self.model_shader)
 
         self.camera.move(glm.vec3(0, -150, 0))
 
+        self.init_gui()
+
+        self.fps_text = Text("FPS:", 10, 10)
+        self.fps_count_text = Text("0", 75, 10)
+
+        self.last = time()
+
+        self.mouse_locked = True
+        self.main_menu = True
+        self.picked = False
+
+        glReadPixels(0, 0, 1, 1, GL_DEPTH_COMPONENT,
+                     GL_FLOAT, ctypes.byref(GLfloat()))
+
+        pyglet.clock.schedule(self.update)
+
+    def init_gui(self):
         main_menu_width = 600
         main_menu_height = 400
         main_menu_x = (self.width - main_menu_width) // 2
@@ -158,23 +196,10 @@ class Window(pyglet.window.Window):
         self.crosshair_vertical = GUI(crosshair_vertical_x, crosshair_vertical_y,
                                       crosshair_height, crosshair_width, (1, 1, 1, 1), self.gui_shader)
 
-        self.shadow_frame_buffer = Shadow()
-
-        self.fps_text = Text("FPS:", 10, 10)
-        self.fps_count_text = Text("0", 75, 10)
-
-        self.last = time()
-
-        self.mouse_locked = True
-        self.main_menu = True
-        self.picked = False
-
-        glReadPixels(0, 0, 1, 1, GL_DEPTH_COMPONENT,
-                     GL_FLOAT, ctypes.byref(GLfloat()))
-
-        pyglet.clock.schedule(self.update)
-
     def init_world(self, terrain_type):
+        self.title_screen.clean_up()
+        self.menu.clean_up()
+
         Terrain.init()
         Water.init()
 
@@ -203,9 +228,12 @@ class Window(pyglet.window.Window):
         self.bush_model = OBJLoader.load_model("bush", self.model_shader)
         self.rock_model = OBJLoader.load_model("rock", self.model_shader)
 
-        self.models = {self.tree_model: Transformation(glm.vec3(), glm.vec3(-math.pi / 2, 0, 0), glm.vec3(
-            0.05, 0.05, 0.05)), self.bush_model: Transformation(glm.vec3(), glm.vec3(0, 0, 0), glm.vec3(1.75, 1.75, 1.75)),
-            self.rock_model: Transformation(glm.vec3(), glm.vec3(), glm.vec3(1.5, 1.5, 1.5))}
+        self.models = {
+            self.tree_model: Transformation(glm.vec3(), glm.vec3(-math.pi / 2, 0, 0), glm.vec3(0.05, 0.05, 0.05)),
+            self.bush_model: Transformation(glm.vec3(), glm.vec3(0, 0, 0), glm.vec3(1.75, 1.75, 1.75)),
+            self.rock_model: Transformation(
+                glm.vec3(), glm.vec3(), glm.vec3(1.5, 1.5, 1.5))
+        }
 
         self.model = self.tree_model
 
@@ -296,7 +324,7 @@ class Window(pyglet.window.Window):
             self.keys["LSHIFT"] = False
 
     def get_depth(self):
-        z = GLfloat()
+        z = ctypes.c_float()
         glReadPixels(self.width // 2, self.height // 2, 1, 1,
                      GL_DEPTH_COMPONENT, GL_FLOAT, ctypes.byref(z))
         return z.value
@@ -310,8 +338,11 @@ class Window(pyglet.window.Window):
         view_space = glm.inverse(self.projection_matrix) * clip_space
         view_space /= view_space.w
         world_space = glm.inverse(self.camera.get_view()) * view_space
-        self.renderer.add_entity(Entity(
-            self.model, world_space.xyz, self.models[self.model].rotation + random.random() / 75, self.models[self.model].scale + random.random() / 75))
+        translation = world_space.xyz
+        rotation = self.models[self.model].rotation + random.random() / 75
+        scale = self.models[self.model].scale + random.random() / 75
+        transformation = Transformation(translation, rotation, scale)
+        self.renderer.add_entity(Entity(self.model, transformation))
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.main_menu:
@@ -325,9 +356,7 @@ class Window(pyglet.window.Window):
         y = self.height - y
         hover = False
         for button in self.curr_menu.buttons:
-            if not button.hover:
-                continue
-            if x > button.x and x < button.x + button.width and y > button.y and y < button.y + button.height:
+            if x > button.x and x < button.x + button.width and y > button.y and y < button.y + button.height and button.hover:
                 hover = True
                 break
         if hover:
@@ -336,37 +365,35 @@ class Window(pyglet.window.Window):
         else:
             self.set_mouse_cursor(
                 self.get_system_mouse_cursor(self.CURSOR_DEFAULT))
-        self.camera.rotate(glm.vec3(-dy * self.mouse_sensitivity,
-                           dx * self.mouse_sensitivity, 0))
+        self.camera.rotate(
+            glm.vec3(-dy * self.mouse_sensitivity, dx * self.mouse_sensitivity, 0))
 
     def on_draw(self):
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glClearColor(0.3, 0.5, 0.8, 1.0)
+        self.clear()
 
         if self.main_menu:
-            self.clear()
             self.curr_menu.render(self.text_shader)
         else:
-            self.shadow_frame_buffer.render(self.renderer, self.world)
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glDisable(GL_CULL_FACE)
             self.renderer.render()
             glEnable(GL_CULL_FACE)
             glCullFace(GL_FRONT)
-            self.world.render_terrain(self.shadow_frame_buffer)
+            self.world.render_terrain()
             if self.picked:
                 self.spawn_entity()
                 self.picked = False
-            self.world.render_water(self.shadow_frame_buffer)
+            self.world.render_water()
             self.inventory.render(self.text_shader)
             self.crosshair_horizontal.render(self.text_shader)
             self.crosshair_vertical.render(self.text_shader)
-
             self.fps_text.render(self.text_shader)
 
         if time() - self.last >= 1:
+            self.fps_text.clean_up()
             self.fps_text = Text("FPS: " + str(self.frames), 10, 10)
             self.frames = 0
             self.last = time()
@@ -376,4 +403,14 @@ class Window(pyglet.window.Window):
     def on_close(self):
         if not self.main_menu:
             self.world.clean_up()
+        self.tree_model.clean_up()
+        self.bush_model.clean_up()
+        self.rock_model.clean_up()
+        self.terrain_shader.clean_up()
+        self.water_shader.clean_up()
+        self.model_shader.clean_up()
+        self.text_shader.clean_up()
+        self.inventory.clean_up()
+        self.crosshair_horizontal.clean_up()
+        self.crosshair_vertical.clean_up()
         self.close()

@@ -3,6 +3,8 @@ from pyglet.gl import *
 import glm
 import ctypes
 
+# custom gui framework. can't do much, but sufficed for this project
+
 
 class GUI:
     def __init__(self, x, y, width, height, color, shader):
@@ -29,9 +31,9 @@ class GUI:
         glGenVertexArrays(1, self.vao)
         glBindVertexArray(self.vao)
 
-        pvbo = ctypes.c_uint32()
-        glGenBuffers(1, pvbo)
-        glBindBuffer(GL_ARRAY_BUFFER, pvbo)
+        self.vbo = ctypes.c_uint32()
+        glGenBuffers(1, self.vbo)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
         glBufferData(GL_ARRAY_BUFFER, len(positions) * 4,
                      (GLfloat * len(positions))(*positions), GL_STATIC_DRAW)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0)
@@ -70,6 +72,16 @@ class GUI:
         for button in self.buttons:
             button.render(self.shader, text_shader)
 
+    def clean_up(self):
+        glDeleteVertexArrays(1, self.vao)
+        glDeleteBuffers(1, self.vbo)
+        glDeleteBuffers(1, self.ibo)
+        for button in self.buttons:
+            glDeleteVertexArrays(1, button.vao)
+            glDeleteBuffers(1, button.vbo)
+            glDeleteBuffers(1, button.ibo)
+            button.text.clean_up()
+
 
 class Button:
     def __init__(self, x, y, width, height, color, text, click_callback, font_size=80, hover=True):
@@ -102,9 +114,9 @@ class Button:
         glGenVertexArrays(1, self.vao)
         glBindVertexArray(self.vao)
 
-        pvbo = ctypes.c_uint32()
-        glGenBuffers(1, pvbo)
-        glBindBuffer(GL_ARRAY_BUFFER, pvbo)
+        self.vbo = ctypes.c_uint32()
+        glGenBuffers(1, self.vbo)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
         glBufferData(GL_ARRAY_BUFFER, len(positions) * 4,
                      (GLfloat * len(positions))(*positions), GL_STATIC_DRAW)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0)

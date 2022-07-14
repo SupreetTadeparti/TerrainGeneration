@@ -14,25 +14,38 @@ class Shader:
             vertex_source = args[0]
             geometry_source = args[1]
             fragment_source = args[2]
-        with open("shaders/" + vertex_source, 'r') as reader:
-            self.vertex_shader = "".join(reader.readlines()).encode("utf-8")
+        self.vertex_shader = self.process_shader(vertex_source)
+        self.fragment_shader = self.process_shader(fragment_source)
+        self.geometry_shader = None
         if geometry_source is not None:
-            with open("shaders/" + geometry_source, 'r') as reader:
-                self.geometry_shader = "".join(
-                    reader.readlines()).encode("utf-8")
-        else:
-            self.geometry_shader = None
-        with open("shaders/" + fragment_source, 'r') as reader:
-            self.fragment_shader = "".join(reader.readlines()).encode("utf-8")
+            self.geometry_shader = self.process_shader(geometry_source)
         self.create()
+
+    def process_shader(self, name):
+        lines = []
+        with open("shaders/" + name + ".glsl", 'r') as reader:
+            for line in reader.readlines():
+                # preprocessing
+                if line.startswith("#include"):
+                    include_file = "shaders/" + \
+                        line.split(" ")[1].replace("\n", "") + ".glsl"
+                    with open(include_file, 'r') as r:
+                        for l in r.readlines():
+                            lines.append(l)
+                else:
+                    lines.append(line)
+        return "".join(lines).encode("utf-8")
 
     def compile_shader(self, type, shader):
         id = glCreateShader(type)
         glShaderSource(id, 1, ctypes.cast(ctypes.pointer(ctypes.pointer(ctypes.create_string_buffer(
             shader))), ctypes.POINTER(ctypes.POINTER(GLchar))), None)
         glCompileShader(id)
+
         result = ctypes.c_int32()
         glGetShaderiv(id, GL_COMPILE_STATUS, result)
+
+        # error handling
         if result.value == GL_FALSE:
             log_size = ctypes.c_int32()
             glGetShaderiv(id, GL_INFO_LOG_LENGTH, log_size)
@@ -48,7 +61,6 @@ class Shader:
             print(f"{shader_type.upper()} SHADER Compilation Error!")
             print(error_log.value.decode('utf-8'))
 
-            return -1
         return id
 
     def create(self):
@@ -92,9 +104,8 @@ class Shader:
         glUniform4f(self.uniform_location(uniform_name), *data)
 
     def set_uniform_mat4(self, uniform_name, data):
-        data = [y for x in data for y in x]
         glUniformMatrix4fv(self.uniform_location(uniform_name),
-                           1, GL_FALSE, (ctypes.c_float * 16)(*data))
+                           1, GL_FALSE, (ctypes.c_float * 16)(*[y for x in data for y in x]))
 
     def clean_up(self):
         glDetachShader(self.program, self.vs)

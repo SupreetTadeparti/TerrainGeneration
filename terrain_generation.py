@@ -1,12 +1,11 @@
 import window
 import pyglet
-pyglet.options['shadow_window'] = False
 
+# Entry point
 
 class App:
     def __init__(self):
-        self.window = window.Window(
-            1280, 720, "Terrain Generation", resizable=True)
+        self.window = window.Window(1280, 720, "Terrain Generation")
 
     def run(self):
         pyglet.app.run()

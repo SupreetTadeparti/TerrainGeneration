@@ -17,13 +17,10 @@ class Model:
             glDeleteBuffers(1, vbo)
 
     def bind(self, shader=None):
-        if shader is not None:
-            shader.enable()
-        else:
-            if not self.shader:
-                print("Shader has not been set")
-                return
-            self.shader.enable()
+        if not self.shader:
+            print("Shader has not been set")
+            return
+        self.shader.enable()
         glBindVertexArray(self.vao)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ibo)
         glEnableVertexAttribArray(0)

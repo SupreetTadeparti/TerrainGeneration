@@ -4,6 +4,7 @@ from texture import Texture
 import ctypes
 from pyglet.gl import *
 
+# Turns out text in games is just joined images of each character. My attempt on that. Text may not be perfect
 
 class Text:
 
@@ -69,6 +70,7 @@ class Text:
         glDeleteBuffers(1, self.pvbo)
         glDeleteBuffers(1, self.tvbo)
         glDeleteBuffers(1, self.ibo)
+        self.texture.clean_up()
 
     def render(self, shader):
         shader.enable()

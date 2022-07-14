@@ -4,7 +4,6 @@ layout (location = 0) in vec2 position;
 
 out vec4 vary_Color;
 out vec4 vary_WorldPos;
-out vec4 vary_LightFragPos;
 out float vary_Visibility;
 
 uniform float u_Noise;
@@ -14,8 +13,6 @@ uniform mat4 u_Model;
 uniform mat4 u_ViewTranslation;
 uniform mat4 u_ViewRotation;
 uniform mat4 u_Projection;
-uniform mat4 u_LightProjection;
-uniform mat4 u_LightView;
 
 const float density = 0.0015;
 const float gradient = 5.0;
@@ -77,6 +74,5 @@ void main()
     vec4 color = (worldPosition.y < 5) ? vec4(0.5, 0.3, 0.2, 1.0) : vec4(0.4, 0.8, 0.3, 1.0);
     vary_Color = color;
     vary_WorldPos = worldPosition;
-    vary_LightFragPos = u_LightProjection * u_LightView * worldPosition;
     vary_Visibility = clamp(exp(-pow((length(viewWorldPosition.xyz) * density), gradient)), 0.0, 1.0);
 }
