@@ -1,6 +1,5 @@
 from terrain import Terrain
 from water import Water
-from perlin_noise import PerlinNoise
 from pyglet.gl import *
 from random import randint
 
