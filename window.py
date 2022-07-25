@@ -200,6 +200,8 @@ class Window(pyglet.window.Window):
         self.crosshair_vertical=GUI(crosshair_vertical_x, crosshair_vertical_y,
                                       crosshair_height, crosshair_width, (1, 1, 1, 1), self.gui_shader)
 
+        self.models = {}
+
     def init_world(self, terrain_type):
         self.title_screen.clean_up()
         self.menu.clean_up()
@@ -210,9 +212,9 @@ class Window(pyglet.window.Window):
         noise_magnitude=1
 
         if terrain_type == "Hills":
-            noise_magnitude=50
+            noise_magnitude=25
         elif terrain_type == "Mountains":
-            noise_magnitude=100
+            noise_magnitude=75
 
         self.terrain_shader.enable()
         self.terrain_shader.set_uniform_1f("u_Noise", noise_magnitude)
@@ -231,6 +233,7 @@ class Window(pyglet.window.Window):
         self.tree_model=OBJLoader.load_model("tree", self.model_shader)
         self.bush_model=OBJLoader.load_model("bush", self.model_shader)
         self.rock_model=OBJLoader.load_model("rock", self.model_shader)
+
 
         self.models={
             self.tree_model: Transformation(glm.vec3(), glm.vec3(-math.pi / 2, 0, 0), glm.vec3(0.05, 0.05, 0.05)),

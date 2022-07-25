@@ -4,6 +4,7 @@ layout (location = 0) in vec2 position;
 
 out vec4 vary_Color;
 out vec4 vary_WorldPos;
+out float vary_FragY;
 out float vary_Visibility;
 
 uniform float u_Noise;
@@ -29,8 +30,7 @@ vec2 mod289(vec2 x) {
   return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
 
-vec4 taylorInvSqrt(vec4 r)
-{
+vec4 taylorInvSqrt(vec4 r) {
   return 1.79284291400159 - 0.85373472095314 * r;
 }
 
@@ -42,8 +42,7 @@ vec3 permute(vec3 x) {
   return mod289(((x * 34.0) + 10.0) * x);
 }
 
-vec4 permute(vec4 x)
-{
+vec4 permute(vec4 x) {
   return mod289(((x * 34.0) + 10.0) * x);
 }
 
@@ -78,8 +77,7 @@ float snoise(vec2 v) {
     return 130.0 * dot(m, g);
 }
 
-float cnoise(vec2 P)
-{
+float cnoise(vec2 P) {
   vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
   vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
   Pi = mod289(Pi);
@@ -117,20 +115,21 @@ float cnoise(vec2 P)
   return 2.3 * n_xy;
 }
 
-void main()
-{
-    vec4 modelPosition = vec4(position.x, 0, position.y, 1.0);
-    vec4 worldPosition = u_Model * modelPosition;
-    float yPos = snoise(vec2(worldPosition.x / 200 + u_OffsetX, worldPosition.z / 200 + u_OffsetZ)) * u_Noise + 25;
-    yPos += cnoise(vec2(worldPosition.x / 200 + u_OffsetX, worldPosition.z / 200 + u_OffsetZ)) * u_Noise * 2 + 25;
-    worldPosition.y = yPos;
-    mat4 translation = u_ViewTranslation;
-    float cameraYPos = snoise(vec2(-translation[3][0] / 200 + u_OffsetX, -translation[3][2] / 200 + u_OffsetZ)) * u_Noise + 30;
-    translation[3][1] = min(translation[3][1], -cameraYPos);
-    vec4 viewWorldPosition = u_ViewRotation * translation * worldPosition;
-    gl_Position = u_Projection * viewWorldPosition;
-    vec4 color = (worldPosition.y < 5) ? vec4(0.5, 0.3, 0.2, 1.0) : vec4(0.4, 0.8, 0.3, 1.0);
-    vary_Color = color;
-    vary_WorldPos = worldPosition;
-    vary_Visibility = clamp(exp(-pow((length(viewWorldPosition.xyz) * density), gradient)), 0.0, 1.0);
+void main() {
+  vec4 modelPosition = vec4(position.x, 0, position.y, 1.0);
+  vec4 worldPosition = u_Model * modelPosition;
+  float yPos = snoise(vec2(worldPosition.x / 200 + u_OffsetX, worldPosition.z / 200 + u_OffsetZ)) * u_Noise + 25;
+  yPos += cnoise(vec2(worldPosition.x / 200 + u_OffsetX, worldPosition.z / 200 + u_OffsetZ)) * u_Noise * 2 + 25;
+  vary_FragY = yPos;
+  worldPosition.y = yPos;
+  mat4 translation = u_ViewTranslation;
+  float cameraYPos = snoise(vec2(-translation[3][0] / 200 + u_OffsetX, -translation[3][2] / 200 + u_OffsetZ)) * u_Noise + 30;
+  cameraYPos += cnoise(vec2(-translation[3][0] / 200 + u_OffsetX, -translation[3][2] / 200 + u_OffsetZ)) * u_Noise * 2 + 30;
+  translation[3][1] = min(translation[3][1], -cameraYPos);
+  vec4 viewWorldPosition = u_ViewRotation * translation * worldPosition;
+  gl_Position = u_Projection * viewWorldPosition;
+  vec4 color = (worldPosition.y < 5) ? vec4(0.5, 0.3, 0.2, 1.0) : vec4(0.4, 0.8, 0.3, 1.0);
+  vary_Color = color;
+  vary_WorldPos = worldPosition;
+  vary_Visibility = clamp(exp(-pow((length(viewWorldPosition.xyz) * density), gradient)), 0.0, 1.0);
 }

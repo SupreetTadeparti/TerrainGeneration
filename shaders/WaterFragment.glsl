@@ -7,7 +7,7 @@ out vec4 o_Color;
 
 void main()
 {
-    vec3 norm = normalize(v_Normal);
+    vec3 norm = normalize(v_Normal / 2);
     vec3 lightDir = normalize(vec3(1.0, -1.0, 1.0));
     float diff = max(dot(norm, lightDir), 0.0) * 10.0 + 2.0;
     vec3 diffuse = diff * vec3(1.0, 1.0, 1.0) / 10;
