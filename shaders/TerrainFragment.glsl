@@ -12,7 +12,7 @@ uniform float u_Noise;
 void main()
 {
     vec3 norm = normalize(v_Normal);
-    vec3 lightDir = normalize(vec3(0, -1, 0));
+    vec3 lightDir = normalize(-u_SunPos);
     float diff = max(dot(norm, lightDir), 0.0) * 5;
     vec3 diffuse = (diff + 2) * vec3(1.0, 1.0, 1.0) / 10;
     vec4 color = vec4(0.4, 0.8, 0.3 - v_FragPos.y / 500 - u_Noise / 255, 1.0);

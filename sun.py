@@ -76,12 +76,13 @@ class Sun:
         self.bloom_shader = bloom_shader
         self.camera = camera
         self.position = glm.vec3()
+        self.da = 0.00001
         self.angle = math.radians(0)
 
     def update(self):
         y = self.radius * math.cos(self.angle)
         z = self.radius * math.sin(self.angle)
-        # self.angle += 0.001
+        self.angle += self.da
         self.position = glm.vec3(0, y, z)
         self.matrix = glm.translate(glm.mat4(1.0), self.position)
 

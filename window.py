@@ -35,6 +35,8 @@ LSHIFT - Downward
 
 Press 'P' to toggle the wireframe
 
+Press 'S' to speed up day and night cycle
+
 Hotkey between 1, 2, and 3 to change the current model
 
 Click anywhere on the terrain or on models to place the current model there
@@ -84,14 +86,12 @@ class Window(pyglet.window.Window):
 
         self.bloom_sun_shader.enable()
         self.bloom_sun_shader.set_uniform_mat4(
-            "u_Projection", glm.perspective(
-            glm.radians(self.fov), self.width / self.height, 0.1, 1000)
+            "u_Projection", self.projection_matrix
         )
 
         self.sun_shader.enable()
         self.sun_shader.set_uniform_mat4(
-            "u_Projection", glm.perspective(
-            glm.radians(self.fov), self.width / self.height, 0.1, 1000)
+            "u_Projection", self.projection_matrix
         )
 
         self.model_shader.enable()
@@ -126,6 +126,7 @@ class Window(pyglet.window.Window):
         self.mouse_locked=True
         self.main_menu=True
         self.picked=False
+        self.sun_speed=True
 
         glReadPixels(0, 0, 1, 1, GL_DEPTH_COMPONENT,
                      GL_FLOAT, ctypes.byref(GLfloat()))
@@ -320,6 +321,10 @@ class Window(pyglet.window.Window):
         if symbol == key.P:
             self.toggle_wireframe()
 
+        if symbol == key.S:
+            self.sun.da = 0.001 if self.sun_speed else 0.00001
+            self.sun_speed = not self.sun_speed
+
         if modifiers == key.MOD_CTRL and symbol == key.Z:
             self.renderer.pop_entity()
 
@@ -408,8 +413,8 @@ class Window(pyglet.window.Window):
         if self.main_menu:
             self.curr_menu.render(self.text_shader)
         else:
-            self.sun.render()
             glDisable(GL_CULL_FACE)
+            self.sun.render()
             self.renderer.render()
             glEnable(GL_CULL_FACE)
             glCullFace(GL_FRONT)
