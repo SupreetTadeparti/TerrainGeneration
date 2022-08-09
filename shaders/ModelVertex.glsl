@@ -25,6 +25,7 @@ void main()
     vec4 worldPosition = u_Model * position;
     mat4 translation = u_ViewTranslation;
     float cameraYPos = snoise(vec2(-translation[3][0] / 200 + u_OffsetX, -translation[3][2] / 200 + u_OffsetZ)) * u_Noise + 30;
+    cameraYPos += cnoise(vec2(-translation[3][0] / 200 + u_OffsetX, -translation[3][2] / 200 + u_OffsetZ)) * u_Noise * 2 + 30;
     translation[3][1] = min(translation[3][1], -cameraYPos);
     vec4 viewWorldPosition = u_ViewRotation * translation * worldPosition;
     gl_Position = u_Projection * viewWorldPosition;

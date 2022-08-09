@@ -7,6 +7,6 @@ uniform float u_DeltaTime;
 
 void main()
 {
-    float posY = sin(delta + u_DeltaTime * 3);
+    float posY = sin(delta + u_DeltaTime);
     gl_Position = vec4(position.x, posY, position.y, 1.0);
 }

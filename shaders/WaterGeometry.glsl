@@ -4,6 +4,7 @@ layout (triangles) in;
 layout (triangle_strip, max_vertices = 3) out;
 
 out vec3 v_Normal;
+out vec3 v_FragPos;
 out float v_Visibility;
 
 uniform float u_Height;
@@ -28,6 +29,7 @@ void main()
     for (int i = 0; i < 3; i++) {
         vec4 worldPosition = u_Model * gl_in[i].gl_Position;
         worldPosition.y += u_Height;
+        v_FragPos = worldPosition.xyz;
         mat4 translation = u_ViewTranslation;
         float cameraYPos = snoise(vec2(-translation[3][0] / 200 + u_OffsetX, -translation[3][2] / 200 + u_OffsetZ)) * u_Noise + 30;
         cameraYPos += cnoise(vec2(-translation[3][0] / 200 + u_OffsetX, -translation[3][2] / 200 + u_OffsetZ)) * u_Noise * 2 + 30;

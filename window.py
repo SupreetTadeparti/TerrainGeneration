@@ -16,6 +16,7 @@ from camera import Camera
 from water import Water
 from terrain import Terrain
 from shader import Shader
+from sun import Sun
 from transformation import Transformation
 from pyglet.gl import *
 from pyglet.window import key
@@ -53,6 +54,8 @@ class Window(pyglet.window.Window):
 
         self.text_shader=Shader("TextVertex", "TextFragment")
         self.gui_shader=Shader("GUIVertex", "GUIFragment")
+        self.sun_shader = Shader("SunVertex", "SunFragment")
+        self.bloom_sun_shader = Shader("BloomSunVertex", "BloomSunFragment")
         self.model_shader=Shader("ModelVertex",
                                    "ModelGeometry",
                                    "ModelFragment")
@@ -79,6 +82,18 @@ class Window(pyglet.window.Window):
             "u_Projection", self.ortho_projection_matrix
         )
 
+        self.bloom_sun_shader.enable()
+        self.bloom_sun_shader.set_uniform_mat4(
+            "u_Projection", glm.perspective(
+            glm.radians(self.fov), self.width / self.height, 0.1, 1000)
+        )
+
+        self.sun_shader.enable()
+        self.sun_shader.set_uniform_mat4(
+            "u_Projection", glm.perspective(
+            glm.radians(self.fov), self.width / self.height, 0.1, 1000)
+        )
+
         self.model_shader.enable()
         self.model_shader.set_uniform_mat4(
             "u_Projection", self.projection_matrix)
@@ -96,6 +111,8 @@ class Window(pyglet.window.Window):
         self.camera.add_shader(self.terrain_shader)
         self.camera.add_shader(self.water_shader)
         self.camera.add_shader(self.model_shader)
+        self.camera.add_shader(self.bloom_sun_shader)
+        self.camera.add_shader(self.sun_shader)
 
         self.camera.move(glm.vec3(0, -150, 0))
 
@@ -206,6 +223,7 @@ class Window(pyglet.window.Window):
         self.title_screen.clean_up()
         self.menu.clean_up()
 
+        Sun.init()
         Terrain.init()
         Water.init()
 
@@ -225,7 +243,9 @@ class Window(pyglet.window.Window):
         self.model_shader.enable()
         self.model_shader.set_uniform_1f("u_Noise", noise_magnitude)
 
-        self.world=World(self.camera, self.terrain_shader,
+        self.sun = Sun(self.sun_shader, self.bloom_sun_shader, self.camera)
+
+        self.world=World(self.camera, self.sun, self.terrain_shader,
                            self.water_shader, self.model_shader)
 
         self.renderer=Renderer()
@@ -276,6 +296,7 @@ class Window(pyglet.window.Window):
         if self.keys["LSHIFT"]:
             self.camera.move(glm.vec3(0, self.camera.speed, 0))
         if not self.main_menu:
+            self.sun.update()
             self.world.update()
 
     def on_key_press(self, symbol, modifiers):
@@ -387,6 +408,7 @@ class Window(pyglet.window.Window):
         if self.main_menu:
             self.curr_menu.render(self.text_shader)
         else:
+            self.sun.render()
             glDisable(GL_CULL_FACE)
             self.renderer.render()
             glEnable(GL_CULL_FACE)

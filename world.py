@@ -5,7 +5,8 @@ from random import randint
 
 
 class World:
-    def __init__(self, camera, terrain_shader, water_shader, model_shader):
+    def __init__(self, camera, sun, terrain_shader, water_shader, model_shader):
+        self.sun = sun
         self.terrain_shader = terrain_shader
         self.water_shader = water_shader
         self.model_shader = model_shader
@@ -55,14 +56,21 @@ class World:
     def render_terrain(self):
         terrain_chunks = self.chunks[::2]
         self.terrain_shader.enable()
+        self.terrain_shader.set_uniform_3f("u_SunPos", self.sun.position)
         glBindVertexArray(Terrain.vao)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Terrain.ibo)
+        glEnableVertexAttribArray(0)
         for chunk in terrain_chunks:
             chunk.render(self.terrain_shader)
 
     def render_water(self):
         water_chunks = self.chunks[1::2]
         self.water_shader.enable()
+        self.water_shader.set_uniform_3f("u_SunPos", self.sun.position)
         glBindVertexArray(Water.vao)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Water.ibo)
+        glEnableVertexAttribArray(0)
+        glEnableVertexAttribArray(1)
         for chunk in water_chunks:
             chunk.render(self.water_shader)
 

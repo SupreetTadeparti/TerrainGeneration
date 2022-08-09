@@ -55,8 +55,4 @@ class Terrain:
 
     def render(self, shader):
         shader.set_uniform_mat4("u_Model", self.matrix)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Terrain.ibo)
-        glEnableVertexAttribArray(0)
         glDrawElements(GL_TRIANGLES, len(Terrain.indices), GL_UNSIGNED_INT, 0)
-        glDisableVertexAttribArray(0)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)

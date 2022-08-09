@@ -77,10 +77,4 @@ class Water:
     def render(self, shader):
         shader.set_uniform_1f("u_DeltaTime", perf_counter() - Water.start)
         shader.set_uniform_mat4("u_Model", self.matrix)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Water.ibo)
-        glEnableVertexAttribArray(0)
-        glEnableVertexAttribArray(1)
         glDrawElements(GL_TRIANGLES, len(Water.indices), GL_UNSIGNED_INT, 0)
-        glDisableVertexAttribArray(1)
-        glDisableVertexAttribArray(0)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
